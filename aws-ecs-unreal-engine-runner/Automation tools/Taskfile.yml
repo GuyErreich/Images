@@ -1,0 +1,35 @@
+version: '3'
+
+vars:
+  PROJECT_PATH: '{{.PROJECT_PATH | default .PWD}}'
+  PROJECT_FILE:
+    sh: '{{.PROJECT_FILE | default}} cd {{.PROJECT_PATH}} && ls *.uproject'
+
+tasks:
+  clean:
+    desc: Cleans the compiled files
+    cmds:
+    - |
+      {{env "UE_TOOLS"}}/RunUAT.sh BuildCookRun \
+      -project="{{.PROJECT_PATH}}/{{.PROJECT_FILE}}" \
+      -noP4 \
+      -clientconfig=Development \
+      -serverconfig=Development \
+      -clean
+
+  build:
+    desc: Build the application
+    cmds:
+    - |
+      {{env "UE_TOOLS"}}/RunUAT.sh BuildCookRun \
+      -project="{{.PROJECT_PATH}}/{{.PROJECT_FILE}}" \
+      -noP4 \
+      -clientconfig=Development \
+      -serverconfig=Development \
+      -cook \
+      -allmaps \
+      -build \
+      -stage \
+      -pak \
+      -archive \
+      -archivedirectory="{{.PROJECT_PATH}}/Build"

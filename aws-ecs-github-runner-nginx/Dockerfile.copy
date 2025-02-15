@@ -1,0 +1,78 @@
+
+ARG NGINX_INSTALL_FOLDER='/usr/local/nginx'
+
+# Build the dynamic module (1.27.1 latest compatible version)
+FROM debian:latest AS builder
+
+ARG NGINX_SOURCE_FOLDER=nginx
+ARG NGINX_INSTALL_FOLDER
+ARG NGINX_VERSION=1.27.1
+ARG MODULE_PATCH=102101
+
+RUN apt update && apt install -y \
+    build-essential \
+    libpcre3-dev \
+    zlib1g-dev \
+    openssl \
+    libssl-dev \
+    git \
+    curl \
+    wget \
+    unzip
+
+WORKDIR /app
+
+RUN mkdir -p ${NGINX_SOURCE_FOLDER}
+
+# Get NGINX version from base image and download its source
+RUN wget http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz && \
+    tar -C ${NGINX_SOURCE_FOLDER} --strip-components=1 -xvzf nginx-${NGINX_VERSION}.tar.gz
+
+# Clone the proxy_connect module
+RUN git clone --depth=1 https://github.com/chobits/ngx_http_proxy_connect_module.git
+
+# Clone the ngx_http_lua_module
+RUN git clone --depth=1 https://github.com/openresty/lua-nginx-module.git
+
+RUN git clone https://github.com/openresty/luajit2.git && \
+    cd luajit2 && \
+    git checkout v2.1-20250117 && \
+    make && make install PREFIX=/usr/local
+
+# Compile the dynamic module
+RUN cd ${NGINX_SOURCE_FOLDER} && \
+    patch -p1 < ../ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_${MODULE_PATCH}.patch && \
+    ./configure \
+    --prefix=${NGINX_INSTALL_FOLDER} \
+    --with-http_ssl_module \
+    --with-http_v2_module \
+    --with-stream \
+    --with-threads \
+    --with-file-aio \
+    --with-http_stub_status_module \
+    --add-module=../ngx_http_proxy_connect_module \
+    --with-cc-opt="-static" \
+    --with-ld-opt="-static" && \
+    make -j$(nproc) && make install
+
+FROM alpine:latest
+
+ARG NGINX_INSTALL_FOLDER
+
+RUN apk add --no-cache \
+    ca-certificates \
+    libgcc \
+    libstdc++ \
+    curl \
+    openresty
+
+COPY --from=builder ${NGINX_INSTALL_FOLDER} /usr/local/nginx
+
+ENV PATH="/usr/local/nginx/sbin:$PATH"
+
+# Copy custom NGINX configuration
+COPY nginx.conf /usr/local/nginx/conf/nginx.conf
+
+EXPOSE 3128
+
+ENTRYPOINT  ["/bin/sh", "-c", "nginx -g 'daemon off;'"]
