@@ -36,7 +36,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: $GHCR_TOKEN
+          password: ${{ env.GHCR_TOKEN }}
 
       - name: Init Environment
         run: task init        
