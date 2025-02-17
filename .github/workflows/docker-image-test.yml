@@ -27,6 +27,8 @@ jobs:
           echo "vars=${{toJSON(vars)}}"
           echo "envs=${{toJSON(env)}}"
 
+          printenv
+
           GHCR_TOKEN=$(curl -s -X POST \
             -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
             -H "Accept: application/vnd.github+json" \
