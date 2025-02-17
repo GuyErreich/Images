@@ -1,0 +1,58 @@
+name: Build, Test & Publish Docker Images
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        IMAGE_DIR: 
+          - aws-ecs-github-runner
+          - aws-ecs-unreal-engine-runner
+          - aws-ecs-github-runner-nginx
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Generate OIDC Token for GHCR
+        id: generate-token
+        run: |
+          GHCR_TOKEN=$(curl -s -X POST \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            $ACTIONS_ID_TOKEN_REQUEST_URL | jq -r '.token')
+
+          echo "GHCR_TOKEN=$GHCR_TOKEN" >> $GITHUB_ENV
+
+      - name: Log in to GitHub Container Registry with OIDC Token
+        run: |
+          echo $GHCR_TOKEN | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+
+      - name: Init Environment
+        run: task init        
+
+      - name: Lint - Enforce Best Practices
+        run: task lint IMAGE_DIR=${{ matrix.IMAGE_DIR }}
+
+      - name: Build Docker Image with Remote Cache
+        run: |
+          task build IMAGE_DIR=${{ matrix.IMAGE_DIR }} -- --cache-from=ghcr.io/${{ github.repository_owner }}/$IMAGE \
+            
+
+      - name: Run Trivy Security Scan
+        run: task scan IMAGE_DIR=${{ matrix.IMAGE_DIR }}
+
+      - name: Run Dive Analysis
+        run: task dive
+
+      - name: Push Image to GitHub Container Registry
+        if: github.event_name == 'push'
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/$IMAGE

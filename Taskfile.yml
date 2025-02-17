@@ -1,0 +1,84 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: '3'
+
+
+
+env:
+  CONFIG_FILE: "{{.IMAGE_DIR}}/config.yml"
+  IMAGE_NAME:
+    sh: "yq -r '.name' {{.CONFIG_FILE}} 2>/dev/null || echo '{{.IMAGE_DIR}}'"
+  IMAGE_TAG:
+    sh: "yq -r '.tag' {{.CONFIG_FILE}} 2>/dev/null || echo 'latest'"
+  IMAGE: "{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
+  
+
+tasks:
+  init:
+    desc: "Install required tools (dive, container-structure-test)"
+    cmds:
+      - |
+        sudo apt update
+        sudo apt install -y \
+          yq
+      - |
+        echo "Fetching latest Dive version..."
+        DIVE_VERSION=$(curl -sL "https://api.github.com/repos/wagoodman/dive/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        echo "Installing Dive ${DIVE_VERSION}..."
+        curl -LO https://github.com/wagoodman/dive/releases/download/v${DIVE_VERSION}/dive_${DIVE_VERSION}_linux_amd64.deb
+        sudo apt install -y ./dive_${DIVE_VERSION}_linux_amd64.deb
+        rm dive_${DIVE_VERSION}_linux_amd64.deb
+      - |
+        echo "Installing latest Container Structure Test..."
+        curl -LO https://github.com/GoogleContainerTools/container-structure-test/releases/latest/download/container-structure-test-linux-amd64
+        chmod +x container-structure-test-linux-amd64
+        mkdir -p $HOME/bin
+        export PATH=$PATH:$HOME/bin
+        mv container-structure-test-linux-amd64 $HOME/bin/container-structure-test
+    status:
+      - command -v dive
+      - command -v container-structure-test
+
+  lint:
+    desc: "Lint the Dockerfile using Hadolint (Docker-based)"
+    dir: "{{.IMAGE_DIR}}"
+    cmds:
+      - docker run --rm -i ghcr.io/hadolint/hadolint hadolint --failure-threshold error - < Dockerfile
+    requires:
+      vars:
+        - IMAGE_DIR
+
+  build:
+    run: when_changed
+    dir: "{{.IMAGE_DIR}}"
+    cmds:
+      - docker build -t {{.IMAGE}} .
+    requires:
+      vars:
+        - IMAGE_DIR
+        - IMAGE_NAME
+    sources:
+      - Dockerfile
+
+  scan:
+    deps:
+      - build
+    desc: "Scan the built Docker image for vulnerabilities using Trivy (Docker-based)"
+    dir: "{{.IMAGE_DIR}}"
+    cmds:
+      - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/workdir -w /workdir aquasec/trivy image -c {{.TRIVY_CONF}} {{.IMAGE}}
+    vars:
+      TRIVY_CONF: 'trivy_conf.yml'
+    requires:
+      vars:
+        - IMAGE_DIR
+        - IMAGE_NAME
+
+  analyze:
+    deps:
+      - build
+    desc: "Analyze the built image layers with Dive"
+    cmds:
+      - dive {{.IMAGE_NAME}} --ci
+    requires:
+      vars:
+        - IMAGE_NAME
