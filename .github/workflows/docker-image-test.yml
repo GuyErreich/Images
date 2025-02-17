@@ -32,8 +32,11 @@ jobs:
           echo "GHCR_TOKEN=$GHCR_TOKEN" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry with OIDC Token
-        run: |
-          echo -n "$GHCR_TOKEN" | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: $GHCR_TOKEN
 
       - name: Init Environment
         run: task init        
