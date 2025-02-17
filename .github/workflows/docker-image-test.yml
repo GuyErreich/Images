@@ -24,10 +24,14 @@ jobs:
       - name: Generate OIDC Token for GHCR
         id: generate-token
         run: |
+          echo "vars=${{toJSON(vars)}}"
+          echo "envs=${{toJSON(env)}}"
+
           GHCR_TOKEN=$(curl -s -X POST \
             -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             $ACTIONS_ID_TOKEN_REQUEST_URL | jq -r '.token')
+
 
           echo "GHCR_TOKEN=$GHCR_TOKEN" >> $GITHUB_ENV
 
