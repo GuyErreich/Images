@@ -1,0 +1,78 @@
+name: Auto Tagging for Each Image
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - stagging
+      - master
+    types:
+      - closed  # ✅ Only triggers on PR merge
+
+jobs:
+  generate-tags:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # ✅ Required to push tags
+
+    strategy:
+      matrix:
+        IMAGE_DIR:
+          - aws-ecs-github-runner
+          - aws-ecs-unreal-engine-runner
+          - aws-ecs-github-runner-nginx
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed to fetch all tags
+
+      - name: Get Latest Version for Image
+        id: get-latest-tag
+        run: |
+          IMAGE_NAME="${{ matrix.IMAGE_DIR }}"
+
+          if [[ "${{ github.base_ref }}" == "dev" ]]; then
+            latest_tag=$(git tag -l "${IMAGE_NAME}-v*-dev" --sort=-v:refname | head -n 1)
+          elif [[ "${{ github.base_ref }}" == "stagging" ]]; then
+            latest_tag=$(git tag -l "${IMAGE_NAME}-v*-dev" --sort=-v:refname | head -n 1 | sed 's/-dev/-stagging/')
+          elif [[ "${{ github.base_ref }}" == "master" ]]; then
+            latest_tag=$(git tag -l "${IMAGE_NAME}-v*-stagging" --sort=-v:refname | head -n 1 | sed 's/-stagging//')
+          fi
+
+          if [[ -z "$latest_tag" ]]; then
+            latest_tag="${IMAGE_NAME}-v0.0.0"
+          fi
+          echo "LATEST_TAG=$latest_tag" >> $GITHUB_ENV
+
+      - name: Determine Next Version
+        id: generate-version
+        run: |
+          IMAGE_NAME="${{ matrix.IMAGE_DIR }}"
+          latest_tag="${{ env.LATEST_TAG }}"
+          major=$(echo $latest_tag | sed "s/${IMAGE_NAME}-v//" | cut -d. -f1)
+          minor=$(echo $latest_tag | sed "s/${IMAGE_NAME}-v//" | cut -d. -f2)
+          patch=$(echo $latest_tag | sed "s/${IMAGE_NAME}-v//" | cut -d. -f3 | cut -d'-' -f1)
+
+          new_patch=$((patch + 1))
+          new_version="${IMAGE_NAME}-v$major.$minor.$new_patch"
+
+          if [[ "${{ github.base_ref }}" == "dev" ]]; then
+            new_tag="${new_version}-dev"
+          elif [[ "${{ github.base_ref }}" == "stagging" ]]; then
+            new_tag="${new_version}-stagging"
+          elif [[ "${{ github.base_ref }}" == "master" ]]; then
+            new_tag="${new_version}"
+          fi
+
+          echo "NEW_TAG=$new_tag" >> $GITHUB_ENV
+          echo "Generated tag: $new_tag"
+
+      - name: Create and Push Tag
+        if: env.NEW_TAG != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{ env.NEW_TAG }}
+          git push origin ${{ env.NEW_TAG }}

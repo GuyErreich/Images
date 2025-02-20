@@ -1,17 +1,6 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: '3'
 
-
-
-env:
-  CONFIG_FILE: "{{.IMAGE_DIR}}/config.yml"
-  IMAGE_NAME:
-    sh: "yq -r '.name' {{.CONFIG_FILE}} 2>/dev/null || echo '{{.IMAGE_DIR}}'"
-  IMAGE_TAG:
-    sh: "yq -r '.tag' {{.CONFIG_FILE}} 2>/dev/null || echo 'latest'"
-  IMAGE: "{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
-  
-
 tasks:
   init:
     desc: "Install required tools (dive, container-structure-test)"
@@ -52,10 +41,13 @@ tasks:
     dir: "{{.IMAGE_DIR}}"
     cmds:
       - docker build -t {{.IMAGE}} .
+    env:
+      IMAGE: "{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
     requires:
       vars:
         - IMAGE_DIR
         - IMAGE_NAME
+        - IMAGE_TAG
     sources:
       - Dockerfile
 
@@ -68,17 +60,41 @@ tasks:
       - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/workdir -w /workdir aquasec/trivy image -c {{.TRIVY_CONF}} {{.IMAGE}}
     vars:
       TRIVY_CONF: 'trivy_conf.yml'
+    env:
+      IMAGE: "{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
     requires:
       vars:
         - IMAGE_DIR
         - IMAGE_NAME
+        - IMAGE_TAG
 
   analyze:
     deps:
       - build
     desc: "Analyze the built image layers with Dive"
     cmds:
-      - dive {{.IMAGE_NAME}} --ci
+      - dive {{.IMAGE}} --ci
+    env:
+      IMAGE: "{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
     requires:
       vars:
         - IMAGE_NAME
+        - IMAGE_TAG
+
+  push:
+    deps:
+      - build
+    desc: "Push the built Docker image to GitHub Container Registry (GHCR)"
+    cmds:
+      - |
+        docker tag {{.CURRENT_IMAGE}} {{.PUBLISHED_IMAGE}}
+        docker push {{.PUBLISHED_IMAGE}}
+    env:
+      CURRENT_IMAGE: "{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
+      PUBLISHED_IMAGE: "{{.REGISTRY}}/{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
+    requires:
+      vars:
+        - IMAGE_DIR
+        - IMAGE_NAME
+        - IMAGE_TAG
+        - REGISTRY

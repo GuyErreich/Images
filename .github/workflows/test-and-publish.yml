@@ -1,0 +1,98 @@
+name: Build, Test & Publish Docker Images
+
+on:
+  create:  
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        IMAGE_DIR:
+          - aws-ecs-github-runner
+          - aws-ecs-unreal-engine-runner
+          - aws-ecs-github-runner-nginx
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Init Environment
+        run: task init
+        
+      - name: Generate Image Name & Tag
+        run: |
+          IMAGE_NAME=${{ matrix.IMAGE_DIR }}
+          IMAGE_TAG=$(git describe --tags --match="${IMAGE_NAME}-v*" --abbrev=0)
+
+          echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+
+      - name: Lint - Enforce Best Practices
+        run: task lint IMAGE_DIR=${{ matrix.IMAGE_DIR }}
+
+      - name: Build Docker Image with Remote Cache
+        run: |
+          task build IMAGE_DIR=${{ matrix.IMAGE_DIR }} \
+                      IMAGE_NAME=${{ env.IMAGE_NAME }} \
+                      IMAGE_TAG=${{ env.IMAGE_TAG }} \
+                      -- --cache-from=ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            
+      - name: Run Trivy Security Scan
+        run: |
+          task scan IMAGE_DIR=${{ matrix.IMAGE_DIR }} \
+                      IMAGE_NAME=${{ env.IMAGE_NAME }} \
+                      IMAGE_TAG=${{ env.IMAGE_TAG }}
+
+      - name: Run Dive Analysis
+        run: |
+          task dive IMAGE_NAME=${{ env.IMAGE_NAME }} \
+                      IMAGE_TAG=${{ env.IMAGE_TAG }}
+
+  publish-image:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        IMAGE_DIR:
+          - aws-ecs-github-runner
+          - aws-ecs-unreal-engine-runner
+          - aws-ecs-github-runner-nginx
+    environment: 
+      name: ${{ 'staging' || 'development' || 'delivery' }}
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Image to GitHub Container Registry
+        run: |
+          IMAGE_NAME=${{ matrix.IMAGE_DIR }}
+          IMAGE_TAG=$(git describe --tags --match="${IMAGE_NAME}-v*" --abbrev=0)
+
+          task push IMAGE_DIR=${{ matrix.IMAGE_DIR }} \
+                      IMAGE_NAME=$IMAGE_NAME \
+                      IMAGE_TAG=$IMAGE_TAG \
+                      REGISTRY=ghcr.io/${{ github.repository_owner }}
