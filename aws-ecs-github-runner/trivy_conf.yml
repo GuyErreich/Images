@@ -1,6 +1,6 @@
 exit-code: 1
 
-ignorefile: ".trivyignore"
+ignorefile: "aws-ecs-github-runner/.trivyignore"
 
 vulnerability:
   ignore-unfixed: true

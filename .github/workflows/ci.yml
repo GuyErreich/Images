@@ -28,6 +28,9 @@ jobs:
         with:
           dockerfile: "${{ matrix.IMAGE_DIR }}/Dockerfile"
           failure-threshold: "error"
+          no-color: false 
+          no-fail: false
+          verbose: false
 
       - name: Determine Cache Source
         run: |
