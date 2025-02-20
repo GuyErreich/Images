@@ -16,16 +16,9 @@ tasks:
         curl -LO https://github.com/wagoodman/dive/releases/download/v${DIVE_VERSION}/dive_${DIVE_VERSION}_linux_amd64.deb
         sudo apt install -y ./dive_${DIVE_VERSION}_linux_amd64.deb
         rm dive_${DIVE_VERSION}_linux_amd64.deb
-      - |
-        echo "Installing latest Container Structure Test..."
-        curl -LO https://github.com/GoogleContainerTools/container-structure-test/releases/latest/download/container-structure-test-linux-amd64
-        chmod +x container-structure-test-linux-amd64
-        mkdir -p $HOME/bin
-        export PATH=$PATH:$HOME/bin
-        mv container-structure-test-linux-amd64 $HOME/bin/container-structure-test
     status:
+      - command -v yq
       - command -v dive
-      - command -v container-structure-test
 
   lint:
     desc: "Lint the Dockerfile using Hadolint (Docker-based)"

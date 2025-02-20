@@ -8,13 +8,13 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    container: 
     strategy:
       matrix:
         IMAGE_DIR:
           - aws-ecs-github-runner
           - aws-ecs-unreal-engine-runner
           - aws-ecs-github-runner-nginx
+      fail-fast: false
     permissions:
       contents: read
       packages: read
@@ -30,7 +30,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Cache Taskfile Tools
+        id: cache-task-tools
+        uses: actions/cache@v3
+        with:
+          path: |
+            /snap/bin/task
+            /usr/bin/dive
+            /usr/bin/yq
+          key: ${{ runner.os }}-task-tools-v1
+          restore-keys: |
+            ${{ runner.os }}-task-tools-
+
       - name: Init Environment
+        if: steps.cache-task-tools.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
