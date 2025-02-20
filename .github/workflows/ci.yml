@@ -65,9 +65,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.29.0
         with:
           image-ref: ${{ matrix.IMAGE_DIR }}:test
-          format: table
-          ignore-unfixed: true
-          severity: CRITICAL,HIGH
+          trivy-config: ${{ matrix.IMAGE_DIR }}/trivy_conf.yml
   
       - name: Analyze Image with Dive
         run: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock wagoodman/dive:latest  ${{ matrix.IMAGE_DIR }}:test --ci
