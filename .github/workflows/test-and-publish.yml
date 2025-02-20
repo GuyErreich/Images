@@ -8,6 +8,7 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    container: 
     strategy:
       matrix:
         IMAGE_DIR:
@@ -30,7 +31,13 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Init Environment
-        run: task init
+        run: |
+          apt update
+          apt install -y --no-install-recommends \
+              snapd
+          snap install task --classic
+          
+          task init
         
       - name: Generate Image Name & Tag
         run: |
