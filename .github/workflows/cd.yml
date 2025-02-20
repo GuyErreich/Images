@@ -1,0 +1,54 @@
+name: CD - Publish Docker Images
+
+on:
+  create:
+  workflow_dispatch:
+
+jobs:
+  publish-image:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        IMAGE_DIR:
+          - aws-ecs-github-runner
+          - aws-ecs-unreal-engine-runner
+          - aws-ecs-github-runner-nginx
+    environment: 
+      name: ${{ 'staging' || 'development' || 'delivery' }}
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Image Name and Test Tag
+        run: |
+          IMAGE_NAME=$(basename "${{ matrix.IMAGE_DIR }}")
+
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+          echo "IMAGE_TAG=test" >> $GITHUB_ENV
+
+      - name: Determine Cache Source
+        run: bash .github/scripts/cache-source.sh "${{ matrix.IMAGE_DIR }}"
+
+      - name: Build Docker Image with Remote Cache
+        run: bash .github/scripts/build-image.sh
+
+      - name: Push Image to GitHub Container Registry
+        run: |
+          IMAGE_NAME=${{ matrix.IMAGE_DIR }}
+          IMAGE_TAG=$(git describe --tags --match="${IMAGE_NAME}-v*" --abbrev=0)
+
+          task push IMAGE_DIR=${{ matrix.IMAGE_DIR }} \
+                      IMAGE_NAME=$IMAGE_NAME \
+                      IMAGE_TAG=$IMAGE_TAG \
+                      REGISTRY=ghcr.io/${{ github.repository_owner }}

@@ -1,4 +1,4 @@
-name: Auto Tagging for Each Image
+name: Auto Tagging
 
 on:
   pull_request:
