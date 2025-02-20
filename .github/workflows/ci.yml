@@ -21,6 +21,25 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Lint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: "${{ matrix.IMAGE_DIR }}/Dockerfile"
+          failure-threshold: "error"
+
+      - name: Determine Cache Source
+        run: |
+          if [[ "${{ github.base_ref }}" == "master" ]]; then
+            CACHE_TAG="latest"
+          elif [[ "${{ github.base_ref }}" == "staging" ]]; then
+            CACHE_TAG="staging"
+          else
+            CACHE_TAG="dev"
+          fi
+
+          echo "CACHE_TAG=$CACHE_TAG" >> $GITHUB_ENV
+          echo "Using cache from: ghcr.io/${{ github.repository_owner }}/${{ matrix.IMAGE_DIR }}:$CACHE_TAG"
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -28,51 +47,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cache Taskfile Tools
-        id: cache-task-tools
-        uses: actions/cache@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build
+        uses: docker/build-push-action@v6
         with:
-          path: |
-            /snap/bin/task
-            /usr/bin/dive
-            /usr/bin/yq
-          key: ${{ runner.os }}-task-tools-v1
-          restore-keys: |
-            ${{ runner.os }}-task-tools-
+          context: ${{ matrix.IMAGE_DIR }}
+          tags: ${{ matrix.IMAGE_DIR }}:test
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ matrix.IMAGE_DIR }}:${{ env.CACHE_TAG }}
+          cache-to: type=inline
+          load: true
 
-      - name: Init Environment
-        if: steps.cache-task-tools.outputs.cache-hit != 'true'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-              snapd
-          sudo snap install task --classic
-
-          task init
-        
-      - name: Set Image Name and Test Tag
-        run: |
-          IMAGE_NAME=$(basename "${{ matrix.IMAGE_DIR }}")
-
-          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
-          echo "IMAGE_TAG=test" >> $GITHUB_ENV
-
-      - name: Determine Cache Source
-        run: bash .github/scripts/cache-source.sh "${{ matrix.IMAGE_DIR }}"
-
-      - name: Lint - Enforce Best Practices
-        run: task lint IMAGE_DIR=${{ matrix.IMAGE_DIR }}
-
-      - name: Build Docker Image with Remote Cache
-        run: bash .github/scripts/build-image.sh
-            
       - name: Run Trivy Security Scan
-        run: |
-          task scan IMAGE_DIR=${{ matrix.IMAGE_DIR }} \
-                      IMAGE_NAME=${{ env.IMAGE_NAME }} \
-                      IMAGE_TAG=${{ env.IMAGE_TAG }}
-
-      - name: Run Dive Analysis
-        run: |
-          task dive IMAGE_NAME=${{ env.IMAGE_NAME }} \
-                      IMAGE_TAG=${{ env.IMAGE_TAG }}
+        uses: aquasecurity/trivy-action@0.29.0
+        with:
+          image-ref: ${{ matrix.IMAGE_DIR }}:test
+          format: table
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
+  
+      - name: Analyze Image with Dive
+        run: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock wagoodman/dive:latest  ${{ matrix.IMAGE_DIR }}:test --ci

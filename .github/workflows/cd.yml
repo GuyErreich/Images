@@ -13,6 +13,7 @@ jobs:
           - aws-ecs-github-runner
           - aws-ecs-unreal-engine-runner
           - aws-ecs-github-runner-nginx
+      fail-fast: false
     environment: 
       name: ${{ 'staging' || 'development' || 'delivery' }}
     permissions:
@@ -30,25 +31,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set Image Name and Test Tag
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract Current Workflow Tag
         run: |
-          IMAGE_NAME=$(basename "${{ matrix.IMAGE_DIR }}")
+          case "${{ github.event.repository.environment }}" in
+            *dev*) LATEST_TAG="dev" ;;
+            *staging*) LATEST_TAG="staging" ;;
+            *) LATEST_TAG="latest" ;;
+          esac
 
-          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
-          echo "IMAGE_TAG=test" >> $GITHUB_ENV
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+          echo "Using latest tag: $LATEST_TAG"
 
-      - name: Determine Cache Source
-        run: bash .github/scripts/cache-source.sh "${{ matrix.IMAGE_DIR }}"
-
-      - name: Build Docker Image with Remote Cache
-        run: bash .github/scripts/build-image.sh
-
-      - name: Push Image to GitHub Container Registry
-        run: |
-          IMAGE_NAME=${{ matrix.IMAGE_DIR }}
-          IMAGE_TAG=${{ github.ref_name }}
-
-          task push IMAGE_DIR=${{ matrix.IMAGE_DIR }} \
-                      IMAGE_NAME=$IMAGE_NAME \
-                      IMAGE_TAG=$IMAGE_TAG \
-                      REGISTRY=ghcr.io/${{ github.repository_owner }}
+      - name: Build & Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.IMAGE_DIR }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.IMAGE_DIR }}:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.IMAGE_DIR }}:${{ env.LATEST_TAG }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ matrix.IMAGE_DIR }}:${{ env.LATEST_TAG }}
+          cache-to: type=inline
+          push: true
