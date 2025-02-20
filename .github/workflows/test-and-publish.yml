@@ -32,11 +32,11 @@ jobs:
 
       - name: Init Environment
         run: |
-          apt update
-          apt install -y --no-install-recommends \
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
               snapd
-          snap install task --classic
-          
+          sudo snap install task --classic
+
           task init
         
       - name: Generate Image Name & Tag
