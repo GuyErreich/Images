@@ -2,10 +2,12 @@ name: CI - Build & Test
 
 on:
   pull_request:
+  workflow_dispatch: # can only work on pull request
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    if: github.base_ref
     strategy:
       matrix:
         IMAGE_DIR:
