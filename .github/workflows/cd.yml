@@ -46,7 +46,7 @@ jobs:
       - name: Push Image to GitHub Container Registry
         run: |
           IMAGE_NAME=${{ matrix.IMAGE_DIR }}
-          IMAGE_TAG=$(git describe --tags --match="${IMAGE_NAME}-v*" --abbrev=0)
+          IMAGE_TAG=${{ github.ref_name }}
 
           task push IMAGE_DIR=${{ matrix.IMAGE_DIR }} \
                       IMAGE_NAME=$IMAGE_NAME \

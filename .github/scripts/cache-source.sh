@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_NAME=$1  # First argument to script
+IMAGE_NAME=$1 # First argument to script
 
 if [[ "${GITHUB_BASE_REF}" == "dev" ]]; then
   CACHE_TAG="v*-dev"
