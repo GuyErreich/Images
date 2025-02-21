@@ -4,6 +4,9 @@ on:
   create:
   workflow_dispatch:
 
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.repository.environment }}
+
 jobs:
   publish-image:
     runs-on: ubuntu-latest
