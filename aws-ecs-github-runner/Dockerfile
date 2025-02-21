@@ -1,25 +1,26 @@
 FROM ubuntu:22.04
 
-ARG RUNNER_VERSION=2.320.0
+ARG RUNNER_VERSION=2.322.0
+
+# Prevent silent failures in pipes
+SHELL ["/bin/bash", "-o", "pipefail", "-c"] 
 
 RUN apt-get update && \
-    apt-get install -y \
-        curl \
+    apt-get install --no-install-recommends -y \
         ca-certificates \
+        curl \
         wget \
         unzip \
         git \
-        cron \
         supervisor \
         jq \
         sudo \
-        libicu-dev \
     && rm -rf /var/lib/apt/lists/*
-    # && git lfs install
         
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip && \
-    sudo ./aws/install
+    ./aws/install && \
+    rm -rf awscliv2.zip ./aws
 
 RUN useradd -m -s /bin/bash runner && \
     echo "runner ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
@@ -30,18 +31,17 @@ WORKDIR ${HOME}
 
 USER runner
 
-RUN mkdir actions-runner && cd actions-runner && \
-    # Download the latest runner package
-    curl -o actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz && \
-    # Optional: Validate the hash
-    echo "93ac1b7ce743ee85b5d386f5c1787385ef07b3d7c728ff66ce0d3813d5f46900  actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz" | shasum -a 256 -c && \
-    # Extract the installer
+WORKDIR ${HOME}/actions-runner
+# mkdir actions-runner && cd actions-runner && \
+# Download the latest runner package
+RUN curl -o actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz && \
+    echo "b13b784808359f31bc79b08a191f5f83757852957dd8fe3dbfcc38202ccf5768  actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz" | shasum -a 256 -c && \
     tar xzf ./actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz
 
 USER root
 
-RUN ln -s ${PWD}/actions-runner/config.sh /bin/github-runner-config && \
-    ln -s ${PWD}/actions-runner/run.sh /bin/github-runner-run
+RUN ln -s "${PWD}/actions-runner/config.sh" "/bin/github-runner-config" && \
+    ln -s "${PWD}/actions-runner/run.sh" "/bin/github-runner-run"
 
 USER runner
 

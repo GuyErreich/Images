@@ -1,0 +1,93 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: '3'
+
+tasks:
+  init:
+    desc: "Install required tools (dive, container-structure-test)"
+    cmds:
+      - |
+        sudo apt update
+        sudo apt install -y \
+          yq
+      - |
+        echo "Fetching latest Dive version..."
+        DIVE_VERSION=$(curl -sL "https://api.github.com/repos/wagoodman/dive/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        echo "Installing Dive ${DIVE_VERSION}..."
+        curl -LO https://github.com/wagoodman/dive/releases/download/v${DIVE_VERSION}/dive_${DIVE_VERSION}_linux_amd64.deb
+        sudo apt install -y ./dive_${DIVE_VERSION}_linux_amd64.deb
+        rm dive_${DIVE_VERSION}_linux_amd64.deb
+    status:
+      - command -v yq
+      - command -v dive
+
+  lint:
+    desc: "Lint the Dockerfile using Hadolint (Docker-based)"
+    dir: "{{.IMAGE_DIR}}"
+    cmds:
+      - docker run --rm -i ghcr.io/hadolint/hadolint hadolint --failure-threshold error - < Dockerfile
+    requires:
+      vars:
+        - IMAGE_DIR
+
+  build:
+    run: when_changed
+    dir: "{{.IMAGE_DIR}}"
+    cmds:
+      - docker build -t {{.IMAGE}} .
+    env:
+      IMAGE: "{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
+    requires:
+      vars:
+        - IMAGE_DIR
+        - IMAGE_NAME
+        - IMAGE_TAG
+    sources:
+      - Dockerfile
+
+  scan:
+    deps:
+      - build
+    desc: "Scan the built Docker image for vulnerabilities using Trivy (Docker-based)"
+    dir: "{{.IMAGE_DIR}}"
+    cmds:
+      - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/workdir -w /workdir aquasec/trivy image -c {{.TRIVY_CONF}} {{.IMAGE}}
+    vars:
+      TRIVY_CONF: 'trivy_conf.yml'
+    env:
+      IMAGE: "{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
+    requires:
+      vars:
+        - IMAGE_DIR
+        - IMAGE_NAME
+        - IMAGE_TAG
+
+  analyze:
+    deps:
+      - build
+    desc: "Analyze the built image layers with Dive"
+    cmds:
+      - dive {{.IMAGE}} --ci
+    env:
+      IMAGE: "{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
+    requires:
+      vars:
+        - IMAGE_NAME
+        - IMAGE_TAG
+
+  push:
+    deps:
+      - build
+    desc: "Push the built Docker image to GitHub Container Registry (GHCR)"
+    cmds:
+      - |
+        docker tag {{.CURRENT_IMAGE}} {{.PUBLISHED_IMAGE}}
+        docker push {{.PUBLISHED_IMAGE}}
+    env:
+      CURRENT_IMAGE: "{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
+      PUBLISHED_IMAGE: "{{.REGISTRY}}/{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
+    requires:
+      vars:
+        - IMAGE_DIR
+        - IMAGE_NAME
+        - IMAGE_TAG
+        - REGISTRY

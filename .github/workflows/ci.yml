@@ -1,0 +1,71 @@
+name: CI - Build & Test
+
+on:
+  pull_request:
+  workflow_dispatch: # can only work on pull request
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    if: github.base_ref
+    strategy:
+      matrix:
+        IMAGE_DIR: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
+      fail-fast: false
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Lint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: "${{ matrix.IMAGE_DIR }}/Dockerfile"
+          failure-threshold: "error"
+          no-color: false 
+          no-fail: false
+          verbose: false
+
+      - name: Determine Cache Source
+        run: |
+          if [[ "${{ github.base_ref }}" == "master" ]]; then
+            CACHE_TAG="latest"
+          elif [[ "${{ github.base_ref }}" == "staging" ]]; then
+            CACHE_TAG="staging"
+          else
+            CACHE_TAG="dev"
+          fi
+
+          echo "CACHE_TAG=$CACHE_TAG" >> $GITHUB_ENV
+          echo "Using cache from: ghcr.io/${{ github.repository_owner }}/${{ matrix.IMAGE_DIR }}:$CACHE_TAG"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.IMAGE_DIR }}
+          tags: ${{ matrix.IMAGE_DIR }}:test
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ matrix.IMAGE_DIR }}:${{ env.CACHE_TAG }}
+          cache-to: type=inline
+          load: true
+
+      - name: Run Trivy Security Scan
+        uses: aquasecurity/trivy-action@0.29.0
+        with:
+          image-ref: ${{ matrix.IMAGE_DIR }}:test
+          trivy-config: ${{ matrix.IMAGE_DIR }}/trivy_conf.yml
+  
+      - name: Analyze Image with Dive
+        run: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock wagoodman/dive:latest  ${{ matrix.IMAGE_DIR }}:test --ci

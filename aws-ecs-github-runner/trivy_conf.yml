@@ -1,0 +1,10 @@
+exit-code: 1
+
+ignorefile: "aws-ecs-github-runner/.trivyignore"
+
+vulnerability:
+  ignore-unfixed: true
+
+severity:
+ - HIGH
+ - CRITICAL
