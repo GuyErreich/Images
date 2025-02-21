@@ -1,4 +1,4 @@
 images:
-  - "aws-ecs-github-runner"
-  - "aws-ecs-github-runner-nginx"
-  # - "aws-ecs-unreal-engine-runner"
+  - aws-ecs-github-runner
+  - aws-ecs-github-runner-nginx
+  # - aws-ecs-unreal-engine-runner
