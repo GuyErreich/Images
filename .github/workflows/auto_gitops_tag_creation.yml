@@ -17,10 +17,7 @@ jobs:
 
     strategy:
       matrix:
-        IMAGE_DIR:
-          - aws-ecs-github-runner
-          - aws-ecs-unreal-engine-runner
-          - aws-ecs-github-runner-nginx
+        IMAGE_DIR: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
 
     steps:
       - name: Checkout Repository

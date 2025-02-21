@@ -9,10 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        IMAGE_DIR:
-          - aws-ecs-github-runner
-          - aws-ecs-unreal-engine-runner
-          - aws-ecs-github-runner-nginx
+        IMAGE_DIR: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
       fail-fast: false
     environment: 
       name: ${{ 'staging' || 'development' || 'delivery' }}
