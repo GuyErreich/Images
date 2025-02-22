@@ -12,7 +12,7 @@ ARG OPENRESTY_INSTALL_FOLDER
 ENV OPENRESTY_INSTALL_FOLDER=${OPENRESTY_INSTALL_FOLDER}
 
 # Prevent silent failures in pipes
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+SHELL ["/bin/sh", "-o", "pipefail", "-c"]
 
 RUN apk add --no-cache \
     build-base \
