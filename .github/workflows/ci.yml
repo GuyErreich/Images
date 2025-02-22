@@ -43,7 +43,7 @@ jobs:
 
       - name: Determine Cache Source
         id: cache-source
-        uses: ./.github/actions/determine-cache  # ✅ Calls the cache action
+        uses: ./.github/workflows/composite-actions/determine-cache  # ✅ Calls the cache action
         with:
           image_dir: ${{ matrix.IMAGE_DIR }}
 
