@@ -37,18 +37,15 @@ jobs:
           dockerfile: "${{ matrix.IMAGE_DIR }}/Dockerfile"
           config: "${{ matrix.IMAGE_DIR }}/hadolint_conf.yml"
 
-      - name: Determine Cache Source
-        run: |
-          if [[ "${{ github.base_ref }}" == "master" ]]; then
-            CACHE_TAG="latest"
-          elif [[ "${{ github.base_ref }}" == "staging" ]]; then
-            CACHE_TAG="staging"
-          else
-            CACHE_TAG="dev"
-          fi
+      - name: Convert Repository Name to Lowercase
+        id: lowercased-owner
+        uses: ./.github/workflows/composite_actions/get_lower_case_owner
 
-          echo "CACHE_TAG=$CACHE_TAG" >> $GITHUB_ENV
-          echo "Using cache from: ghcr.io/${{ github.repository_owner }}/${{ matrix.IMAGE_DIR }}:$CACHE_TAG"
+      - name: Determine Cache Source
+        id: cache-source
+        uses: ./.github/actions/determine-cache  # ✅ Calls the cache action
+        with:
+          image_dir: ${{ matrix.IMAGE_DIR }}
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -65,7 +62,7 @@ jobs:
         with:
           context: ${{ matrix.IMAGE_DIR }}
           tags: ${{ matrix.IMAGE_DIR }}:test
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ matrix.IMAGE_DIR }}:${{ env.CACHE_TAG }}
+          cache-from: type=registry,ref=${{ steps.cache-source.outputs.cache_from }}
           cache-to: type=inline
           load: true
 

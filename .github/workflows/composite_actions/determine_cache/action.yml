@@ -1,0 +1,40 @@
+name: "Determine Cache Source"
+description: "Determines the appropriate cache tag based on branch"
+inputs:
+  image_dir:
+    description: "Image directory name"
+    required: true
+outputs:
+  cache_tag:
+    description: "Cache tag for the Docker image"
+    value: ${{ steps.determine-cache.outputs.cache_tag }}
+  cache_from:
+    description: "Full cache source reference"
+    value: ${{ steps.determine-cache.outputs.cache_from }}
+runs:
+  using: "composite"
+  steps:
+    - name: Convert Repository Name to Lowercase
+      id: lowercase-owner
+      uses: ./.github/workflows/composite_actions/get_lower_case_owner  # ✅ Calls the lowercase action
+
+    - name: Determine Cache Source
+      id: determine-cache
+      uses: actions/github-script@v7
+      with:
+        result-encoding: string
+        script: |
+          let cacheTag;
+          if (process.env.GITHUB_BASE_REF === "master") {
+            cacheTag = "latest";
+          } else if (process.env.GITHUB_BASE_REF === "staging") {
+            cacheTag = "staging";
+          } else {
+            cacheTag = "dev";
+          }
+
+          const cacheFrom = `ghcr.io/${{ steps.lowercase-owner.outputs.repo_owner }}/${{ inputs.image_dir }}:${cacheTag}`;
+
+          console.log(`Using cache from: ${cacheFrom}`);
+
+          return JSON.stringify({ cache_tag: cacheTag, cache_from: cacheFrom });
