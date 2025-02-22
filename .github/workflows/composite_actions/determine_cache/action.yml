@@ -44,3 +44,4 @@ runs:
         echo ${{ steps.determine-cache.outputs.result }}
         echo ${{ steps.determine-cache.outputs.result.cache_tag }}
         echo ${{ steps.determine-cache.outputs.result.cache_from }}
+      shell: bash
