@@ -37,7 +37,7 @@ runs:
 
           console.log(`Using cache from: ${cacheFrom}`);
 
-          return { cache_tag: cacheTag, cache_from: cacheFrom }
+          return { cache_tag: cacheTag, cache_from: cacheFrom };
 
     - name: print
       run: |
