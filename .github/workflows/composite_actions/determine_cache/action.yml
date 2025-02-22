@@ -37,11 +37,11 @@ runs:
 
           console.log(`Using cache from: ${cacheFrom}`);
 
-          return { cache_tag: cacheTag, cache_from: cacheFrom };
+          core.setOutput("cache_tag", cacheTag);
+          core.setOutput("cache_from", cacheFrom);
 
     - name: print
       run: |
-        echo ${{ steps.determine-cache.outputs.result }}
-        echo ${{ steps.determine-cache.outputs.result.cache_tag }}
-        echo ${{ steps.determine-cache.outputs.result.cache_from }}
+        echo ${{ steps.determine-cache.outputs.cache_tag }}
+        echo ${{ steps.determine-cache.outputs.cache_from }}
       shell: bash
