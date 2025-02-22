@@ -2,15 +2,19 @@ name: CI - Build & Test
 
 on:
   pull_request:
-  workflow_dispatch: # can only work on pull request
+  workflow_dispatch:
 
 jobs:
+  generate-matrix:
+    uses: ./.github/workflows/set_matrix.yml
+
   build-and-test:
+    needs: generate-matrix
     runs-on: ubuntu-latest
     if: github.base_ref
     strategy:
       matrix:
-        IMAGE_DIR: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
+        IMAGE_DIR: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
       fail-fast: false
     permissions:
       contents: read
