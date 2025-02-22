@@ -1,0 +1,15 @@
+name: "Convert Repository Owner to Lowercase"
+description: "Outputs the lowercase repository owner name"
+outputs:
+  repo_owner:
+    description: "Lowercased repository owner name"
+    value: ${{ steps.repo-lowercase.outputs.repo_owner_lower }}
+runs:
+  using: "composite"
+  steps:
+    - name: Convert Owner Name to Lowercase
+      id: lowercased-owner
+      uses: actions/github-script@v7
+      with:
+        result-encoding: string
+        script: return context.repo.owner.toLowerCase();
