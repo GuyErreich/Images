@@ -38,3 +38,9 @@ runs:
           console.log(`Using cache from: ${cacheFrom}`);
 
           return JSON.stringify({ cache_tag: cacheTag, cache_from: cacheFrom });
+
+    - name: print
+      run: |
+        echo ${{ steps.determine-cache.outputs.result }}
+        echo ${{ steps.determine-cache.outputs.result.cache_tag }}
+        echo ${{ steps.determine-cache.outputs.result.cache_from }}
