@@ -29,5 +29,7 @@ jobs:
             const fs = require('fs');
             const yaml = require('js-yaml');
             const matrix = yaml.load(fs.readFileSync('.github/workflows/resources/matrix.yml', 'utf8'));
-            console.log(JSON.stringify(matrix.images));
+            const result = JSON.stringify(matrix.images)
+            console.log(result);
+            return result
           
