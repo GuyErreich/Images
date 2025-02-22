@@ -35,10 +35,7 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: "${{ matrix.IMAGE_DIR }}/Dockerfile"
-          failure-threshold: "error"
-          no-color: false 
-          no-fail: false
-          verbose: false
+          config: "${{ matrix.IMAGE_DIR }}/hadolint.yml"
 
       - name: Determine Cache Source
         run: |

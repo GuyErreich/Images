@@ -1,13 +1,18 @@
 ARG OPENRESTY_INSTALL_FOLDER='/usr/local/openresty'
 
+ARG ALPINE_VERSION=3.21.3
+
 # Build OpenResty with ngx_http_proxy_connect_module
-FROM alpine:latest AS builder
+FROM alpine:${ALPINE_VERSION} AS builder
 
 ARG NGINX_VERSION=1.25.3
 ARG OPENRESTY_VERSION=${NGINX_VERSION}.2
 ARG MODULE_PATCH=102101
 ARG OPENRESTY_INSTALL_FOLDER
 ENV OPENRESTY_INSTALL_FOLDER=${OPENRESTY_INSTALL_FOLDER}
+
+# Prevent silent failures in pipes
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN apk add --no-cache \
     build-base \
@@ -23,7 +28,7 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Download OpenResty source
-RUN wget https://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz && \
+RUN wget --progress=dot:giga https://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz && \
     tar -xvzf openresty-${OPENRESTY_VERSION}.tar.gz
 
 # Clone the proxy_connect module
@@ -44,7 +49,7 @@ RUN ./configure \
     --with-luajit \
     --add-module=../ngx_http_proxy_connect_module && \
     patch -d build/nginx-${NGINX_VERSION} -p 1 < ../ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_${MODULE_PATCH}.patch && \
-    make -j$(nproc) && make install
+    make -j"$(nproc)" && make install
 
 RUN mkdir -p /opt/deps && \
     ldd ${OPENRESTY_INSTALL_FOLDER}/nginx/sbin/nginx | awk '{print $3}' | grep "^/" | xargs -I '{}' cp -v '{}' /opt/deps/
@@ -52,7 +57,7 @@ RUN mkdir -p /opt/deps && \
 RUN cp -r ${OPENRESTY_INSTALL_FOLDER}/luajit /opt/luajit
 
 # Final lightweight Alpine image
-FROM alpine:latest
+FROM alpine:${ALPINE_VERSION}
 
 ARG OPENRESTY_INSTALL_FOLDER
 ENV OPENRESTY_INSTALL_FOLDER=${OPENRESTY_INSTALL_FOLDER}
