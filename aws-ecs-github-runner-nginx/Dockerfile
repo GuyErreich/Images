@@ -62,6 +62,9 @@ FROM alpine:${ALPINE_VERSION}
 ARG OPENRESTY_INSTALL_FOLDER
 ENV OPENRESTY_INSTALL_FOLDER=${OPENRESTY_INSTALL_FOLDER}
 
+# Prevent silent failures in pipes
+SHELL ["/bin/sh", "-o", "pipefail", "-c"]
+
 RUN apk add --no-cache \
     ca-certificates \
     pcre \
