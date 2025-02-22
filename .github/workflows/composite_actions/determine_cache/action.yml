@@ -16,10 +16,7 @@ runs:
   steps:
     - name: Convert Repository Name to Lowercase
       id: lowercase-owner
-      uses: ./.github/workflows/composite_actions/get_lower_case_owner  # ✅ Calls the lowercase action
-
-    - run: echo "${{ steps.lowercase-owner.outputs.repo_owner }}"
-      shell: bash
+      uses: ./.github/workflows/composite_actions/get_lower_case_owner
 
     - name: Determine Cache Source
       id: determine-cache
@@ -40,4 +37,4 @@ runs:
 
           console.log(`Using cache from: ${cacheFrom}`);
 
-          return { cache_tag: cacheTag, cache_from: cacheFrom };
+          return JSON.stringify({ cache_tag: cacheTag, cache_from: cacheFrom });
