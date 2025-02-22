@@ -25,12 +25,11 @@ jobs:
       - id: read-matrix 
         uses: actions/github-script@v7
         with:
-          result-encoding: string
           script: |
             const fs = require('fs');
             const yaml = require('js-yaml');
             const matrix = yaml.load(fs.readFileSync('.github/workflows/resources/matrix.yml', 'utf8'));
-            const result = JSON.stringify(matrix.images)
+            const result = matrix.images
             console.log(result);
             return result
           
