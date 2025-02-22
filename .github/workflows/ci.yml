@@ -35,7 +35,7 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: "${{ matrix.IMAGE_DIR }}/Dockerfile"
-          config: "${{ matrix.IMAGE_DIR }}/hadolint.yml"
+          config: "${{ matrix.IMAGE_DIR }}/hadolint_conf.yml"
 
       - name: Determine Cache Source
         run: |
