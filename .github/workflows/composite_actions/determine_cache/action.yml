@@ -19,6 +19,7 @@ runs:
       uses: ./.github/workflows/composite_actions/get_lower_case_owner  # ✅ Calls the lowercase action
 
     - run: echo "${{ steps.lowercase-owner.outputs.repo_owner }}"
+      shell: bash
 
     - name: Determine Cache Source
       id: determine-cache
