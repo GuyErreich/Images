@@ -18,6 +18,8 @@ runs:
       id: lowercase-owner
       uses: ./.github/workflows/composite_actions/get_lower_case_owner  # ✅ Calls the lowercase action
 
+    - run: echo "${{ steps.lowercase-owner.outputs.repo_owner }}"
+
     - name: Determine Cache Source
       id: determine-cache
       uses: actions/github-script@v7
@@ -37,4 +39,4 @@ runs:
 
           console.log(`Using cache from: ${cacheFrom}`);
 
-          return JSON.stringify({ cache_tag: cacheTag, cache_from: cacheFrom });
+          return { cache_tag: cacheTag, cache_from: cacheFrom };
