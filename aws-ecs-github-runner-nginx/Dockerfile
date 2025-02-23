@@ -1,5 +1,4 @@
 ARG OPENRESTY_INSTALL_FOLDER='/usr/local/openresty'
-
 ARG ALPINE_VERSION=3.21.3
 
 # Build OpenResty with ngx_http_proxy_connect_module
@@ -51,10 +50,14 @@ RUN ./configure \
     patch -d build/nginx-${NGINX_VERSION} -p 1 < ../ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_${MODULE_PATCH}.patch && \
     make -j"$(nproc)" && make install
 
+WORKDIR /app
+
+# RUN rm -rf openresty-${OPENRESTY_VERSION} openresty-${OPENRESTY_VERSION}.tar.gz ngx_http_proxy_connect_module
+
 RUN mkdir -p /opt/deps && \
     ldd ${OPENRESTY_INSTALL_FOLDER}/nginx/sbin/nginx | awk '{print $3}' | grep "^/" | xargs -I '{}' cp -v '{}' /opt/deps/
 
-RUN cp -r ${OPENRESTY_INSTALL_FOLDER}/luajit /opt/luajit
+# RUN cp -r ${OPENRESTY_INSTALL_FOLDER}/luajit /opt/luajit
 
 # Final lightweight Alpine image
 FROM alpine:${ALPINE_VERSION}
@@ -66,17 +69,18 @@ ENV OPENRESTY_INSTALL_FOLDER=${OPENRESTY_INSTALL_FOLDER}
 SHELL ["/bin/sh", "-o", "pipefail", "-c"]
 
 RUN apk add --no-cache \
-    ca-certificates \
-    pcre \
-    openssl \
-    zlib \
-    curl
+        ca-certificates \
+        pcre \
+        openssl \
+        zlib \
+        curl \
+    rm -rf /lib/apk/db /etc/apk /var/cache/apk/*
 
+    
+    # Copy required shared libraries
 COPY --from=builder ${OPENRESTY_INSTALL_FOLDER} /usr/local/openresty
-
-# Copy required shared libraries
+# COPY --from=builder /opt/luajit /usr/local/openresty/luajit
 COPY --from=builder /opt/deps/* /lib/
-COPY --from=builder /opt/luajit /usr/local/openresty/luajit
 
 ENV PATH="/usr/local/openresty/bin:/usr/local/openresty/nginx/sbin:$PATH"
 ENV LD_LIBRARY_PATH="/lib:/usr/local/openresty/luajit/lib"
