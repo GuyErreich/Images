@@ -11,7 +11,7 @@ ARG OPENRESTY_INSTALL_FOLDER
 ENV OPENRESTY_INSTALL_FOLDER=${OPENRESTY_INSTALL_FOLDER}
 
 # Prevent silent failures in pipes
-SHELL ["/bin/sh", "-o", "pipefail", "-c"]
+SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 
 RUN apk add --no-cache \
     build-base \
@@ -66,7 +66,7 @@ ARG OPENRESTY_INSTALL_FOLDER
 ENV OPENRESTY_INSTALL_FOLDER=${OPENRESTY_INSTALL_FOLDER}
 
 # Prevent silent failures in pipes
-SHELL ["/bin/sh", "-o", "pipefail", "-c"]
+SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 
 RUN apk add --no-cache \
         ca-certificates \
@@ -77,7 +77,7 @@ RUN apk add --no-cache \
     rm -rf /lib/apk/db /etc/apk /var/cache/apk/*
 
     
-    # Copy required shared libraries
+# Copy required shared libraries
 COPY --from=builder ${OPENRESTY_INSTALL_FOLDER} /usr/local/openresty
 # COPY --from=builder /opt/luajit /usr/local/openresty/luajit
 COPY --from=builder /opt/deps/* /lib/
