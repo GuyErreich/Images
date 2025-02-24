@@ -6,18 +6,18 @@ metadataTest:
 
 fileExistenceTests:
   - name: "Check if entrypoint.py exists"
-    path: "entrypoint.py"
+    path: "/app/entrypoint.py"
     shouldExist: true
     permissions: "-rwxr-xr-x"
 
   - name: "Check if nginx.conf is generated"
-    path: "nginx.conf"
+    path: "/app/templates/nginx.conf"
     shouldExist: true
     permissions: "-rw-r--r--"
 
 commandTests:
   - name: "Run entrypoint.py with test args"
-    command: "entrypoint.py"
+    command: "/app/entrypoint.py"
     args: ["--resolver", "8.8.8.8",
            "--port", "3128",
            "--allowed-upstreams", "169.254.170.2,192.168.1.2",
