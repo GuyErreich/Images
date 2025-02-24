@@ -17,7 +17,7 @@ fileExistenceTests:
 
 commandTests:
   - name: "Run entrypoint.py with test args"
-    command: "/usr/local/openresty/entrypoint.py"
+    command: "entrypoint.py"
     args: ["--resolver", "8.8.8.8",
            "--port", "3128",
            "--allowed-upstreams", "169.254.170.2,192.168.1.2",
