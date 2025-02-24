@@ -74,8 +74,10 @@ RUN apk add --no-cache \
         openssl \
         zlib \
         curl \
+        python3 \
+        py3-pip \
+        py3-jinja2 \
     rm -rf /lib/apk/db /etc/apk /var/cache/apk/*
-
     
 # Copy required shared libraries
 COPY --from=builder ${OPENRESTY_INSTALL_FOLDER} /usr/local/openresty
@@ -85,9 +87,14 @@ COPY --from=builder /opt/deps/* /lib/
 ENV PATH="/usr/local/openresty/bin:/usr/local/openresty/nginx/sbin:$PATH"
 ENV LD_LIBRARY_PATH="/lib:/usr/local/openresty/luajit/lib"
 
+WORKDIR /app
+
 # Copy custom OpenResty configuration
-COPY nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
+COPY nginx.conf templates/nginx.conf
+COPY entrypoint.py entrypoint.py
+
+RUN chmod +x entrypoint.py
 
 EXPOSE 3128
 
-ENTRYPOINT  ["/bin/sh", "-c", "nginx -g 'daemon off;'"]
+ENTRYPOINT  ["./entrypoint.py", "--template-dir", "templates", "--template-file", "nginx.conf", "--output-file", "/usr/local/openresty/nginx/conf/nginx.conf" ]
