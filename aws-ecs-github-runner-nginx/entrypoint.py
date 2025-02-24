@@ -68,11 +68,6 @@ def main():
         allowed_server_names    = server_names
     )
 
-    print(args.resolver)
-    print(allowed_upstreams)
-    print(server_names)
-    print(conf_content)
-
     # Write the final configuration file
     with open(args.output_file, "w") as f:
         f.write(conf_content)
