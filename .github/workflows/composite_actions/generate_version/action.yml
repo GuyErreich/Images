@@ -10,10 +10,10 @@ inputs:
 outputs:
   latest_tag:
     description: "Latest found tag for the image"
-    value: ${{ steps.get-latest-tag.outputs.latest_tag }}
+    value: ${{ steps.generate-tag.outputs.latest_tag }}
   new_tag:
     description: "New versioned tag to use"
-    value: ${{ steps.generate-version.outputs.new_tag }}
+    value: ${{ steps.generate-tag.outputs.new_tag }}
 
 runs:
   using: "composite"
