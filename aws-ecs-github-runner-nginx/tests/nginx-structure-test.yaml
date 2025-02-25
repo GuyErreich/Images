@@ -1,23 +1,35 @@
 schemaVersion: 2.0.0
+
 metadataTest:
   envVars:
     - key: OPENRESTY_INSTALL_FOLDER
       value: "/usr/local/openresty"
+  exposedPorts: ["3128"]
+  entrypoint: [ "./entrypoint.py", "--template-dir", "templates", "--template-file", "nginx.conf", "--output-file", "/usr/local/openresty/nginx/conf/nginx.conf" ]
+  workdir: "/app"
 
 fileExistenceTests:
-  - name: "Check if entrypoint.py exists"
+  - name: "entrypoint.py"
     path: "/app/entrypoint.py"
     shouldExist: true
     permissions: "-rwxr-xr-x"
 
-  - name: "Check if nginx.conf is generated"
+  - name: "nginx.conf template"
     path: "/app/templates/nginx.conf"
     shouldExist: true
     permissions: "-rw-r--r--"
 
+  - name: "nginx.conf"
+    path: "/usr/local/openresty/nginx/conf/nginx.conf"
+    shouldExist: true
+    permissions: "-rw-r--r--"
+
+
+
 commandTests:
   - name: "Run entrypoint.py with test args"
-    command: "/app/entrypoint.py"
+    setup: [["cd", "/app"]]
+    command: "entrypoint.py"
     args: ["--resolver", "8.8.8.8",
            "--port", "3128",
            "--allowed-upstreams", "169.254.170.2,192.168.1.2",
@@ -25,8 +37,9 @@ commandTests:
            "--template-dir", "templates",
            "--template-file", "nginx.conf",
            "--output-file", "/usr/local/openresty/nginx/conf/nginx.conf",
-           "--cmd", "[echo, 'Hello, World!']"]
+           "--cmd", "[echo, 'Testing entrypoint.py conf generation']"]
     exitCode: 0
+
 
 fileContentTests:
   - name: "Check if nginx.conf contains correct resolver"
