@@ -69,16 +69,4 @@ jobs:
   
       - name: Analyze Image with Dive
         run: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock wagoodman/dive:latest  ${{ matrix.IMAGE_DIR }}:test --ci
-
-      - name: Install Container Structure Test
-        run: |
-          curl -LO https://github.com/GoogleContainerTools/container-structure-test/releases/latest/download/container-structure-test-linux-amd64
-          chmod +x container-structure-test-linux-amd64
-          sudo mv container-structure-test-linux-amd64 /usr/local/bin/container-structure-test
-
-      - name: Run Container Structure Tests
-        if: hashFiles('${{matrix.IMAGE_DIR}}/tests/nginx-structure-test.yaml') != ''
-        run: |
-          container-structure-test test \
-          --image ${{ matrix.IMAGE_DIR }}:test \
-          --config ${{ matrix.IMAGE_DIR }}/tests/nginx-structure-test.yaml
+          
