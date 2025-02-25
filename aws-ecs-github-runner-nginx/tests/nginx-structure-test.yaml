@@ -1,21 +1,27 @@
 schemaVersion: 2.0.0
 
+globalEnvVars:
+  - key: "WORKDIR"
+    value: "$WORKDIR"
+
+
 metadataTest:
   envVars:
     - key: OPENRESTY_INSTALL_FOLDER
       value: "/usr/local/openresty"
   exposedPorts: ["3128"]
   entrypoint: [ "./entrypoint.py", "--template-dir", "templates", "--template-file", "nginx.conf", "--output-file", "/usr/local/openresty/nginx/conf/nginx.conf" ]
-  workdir: "/app"
+  workdir: "$WORKDIR"
+
 
 fileExistenceTests:
   - name: "entrypoint.py"
-    path: "/app/entrypoint.py"
+    path: "$WORKDIR/entrypoint.py"
     shouldExist: true
     permissions: "-rwxr-xr-x"
 
   - name: "nginx.conf template"
-    path: "/app/templates/nginx.conf"
+    path: "$WORKDIR/templates/nginx.conf"
     shouldExist: true
     permissions: "-rw-r--r--"
 
@@ -28,13 +34,12 @@ fileExistenceTests:
 
 commandTests:
   - name: "Run entrypoint.py with test args"
-    setup: [["ash", "-c", "cd", "/app"]]
-    command: "entrypoint.py"
+    command: "$WORKDIR/entrypoint.py"
     args: ["--resolver", "8.8.8.8",
            "--port", "3128",
            "--allowed-upstreams", "169.254.170.2,192.168.1.2",
            "--server-names", "api.github.com,github.com,*.actions.githubusercontent.com",
-           "--template-dir", "templates",
+           "--template-dir", "$WORKDIR/templates",
            "--template-file", "nginx.conf",
            "--output-file", "/usr/local/openresty/nginx/conf/nginx.conf",
            "--cmd", "[echo, 'Testing entrypoint.py conf generation']"]
