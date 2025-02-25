@@ -10,7 +10,7 @@ metadataTest:
     - key: OPENRESTY_INSTALL_FOLDER
       value: "/usr/local/openresty"
   exposedPorts: ["3128"]
-  entrypoint: [ "./entrypoint.py", "--template-dir", "templates", "--template-file", "nginx.conf", "--output-file", "/tmp/nginx.conf" ]
+  entrypoint: [ "./entrypoint.py", "--template-dir", "templates", "--template-file", "nginx.conf", "--output-file", "/app/temp/nginx.conf" ]
   workdir: "/app"
 
 
@@ -26,7 +26,7 @@ fileExistenceTests:
     permissions: "-rw-r--r--"
 
   - name: "nginx.conf"
-    path: "/tmp/nginx.conf"
+    path: "/app/temp/nginx.conf"
     shouldExist: true
     permissions: "-rw-r--r--"
 
