@@ -10,14 +10,18 @@ on:
       - closed  # ✅ Only triggers on PR merge
 
 jobs:
+  generate-matrix:
+    uses: ./.github/workflows/set_matrix.yml
+
   generate-tags:
+    needs: generate-matrix
     runs-on: ubuntu-latest
     permissions:
       contents: write  # ✅ Required to push tags
 
     strategy:
       matrix:
-        IMAGE_DIR: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
+        IMAGE_DIR: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
 
     steps:
       - name: Checkout Repository
