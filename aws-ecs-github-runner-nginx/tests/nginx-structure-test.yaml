@@ -11,7 +11,7 @@ metadataTest:
       value: "/usr/local/openresty"
   exposedPorts: ["3128"]
   entrypoint: [ "./entrypoint.py", "--template-dir", "templates", "--template-file", "nginx.conf", "--output-file", "/usr/local/openresty/nginx/conf/nginx.conf" ]
-  workdir: "$WORKDIR"
+  workdir: "/app"
 
 
 fileExistenceTests:
