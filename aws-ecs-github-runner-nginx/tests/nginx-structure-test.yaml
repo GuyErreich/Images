@@ -10,7 +10,7 @@ metadataTest:
     - key: OPENRESTY_INSTALL_FOLDER
       value: "/usr/local/openresty"
   exposedPorts: ["3128"]
-  entrypoint: [ "./entrypoint.py", "--template-dir", "templates", "--template-file", "nginx.conf", "--output-file", "/usr/local/openresty/nginx/conf/nginx.conf" ]
+  entrypoint: [ "./entrypoint.py", "--template-dir", "templates", "--template-file", "nginx.conf", "--output-file", "/tmp/nginx.conf" ]
   workdir: "/app"
 
 
@@ -26,7 +26,7 @@ fileExistenceTests:
     permissions: "-rw-r--r--"
 
   - name: "nginx.conf"
-    path: "/usr/local/openresty/nginx/conf/nginx.conf"
+    path: "/tmp/nginx.conf"
     shouldExist: true
     permissions: "-rw-r--r--"
 
@@ -42,7 +42,7 @@ commandTests:
       "--server-names", "api.github.com,github.com,*.actions.githubusercontent.com",
       "--template-dir", "/app/templates",
       "--template-file", "nginx.conf",
-      "--output-file", "/usr/local/openresty/nginx/conf/nginx.conf",
+      "--output-file", "/tmp/nginx.conf",
       "--cmd", "echo", "'Testing entrypoint.py conf generation'"
     ]
     exitCode: 0
@@ -50,23 +50,23 @@ commandTests:
 
 fileContentTests:
   - name: "Check if nginx.conf contains correct resolver"
-    path: "/usr/local/openresty/nginx/conf/nginx.conf"
+    path: "/tmp/nginx.conf"
     expectedContents: 
       - "resolver 8.8.8.8"
 
   - name: "Check if nginx.conf has correct port"
-    path: "/usr/local/openresty/nginx/conf/nginx.conf"
+    path: "/tmp/nginx.conf"
     expectedContents: 
       - "listen 3128;"
 
   - name: "Check if nginx.conf includes upstream IPs"
-    path: "/usr/local/openresty/nginx/conf/nginx.conf"
+    path: "/tmp/nginx.conf"
     expectedContents: 
       - '["169.254.170.2"] = true,'
       - '["192.168.1.2"] = true,'
 
   - name: "Check if nginx.conf includes server names"
-    path: "/usr/local/openresty/nginx/conf/nginx.conf"
+    path: "/tmp/nginx.conf"
     expectedContents: 
       - "server_name api.github.com;"
       - "server_name github.com;"
