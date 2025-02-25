@@ -8,6 +8,16 @@ on:
       - master
     types:
       - closed  # ✅ Only triggers on PR merge
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch to tag'
+        required: true
+        type: choice
+        options:
+          - dev
+          - stagging
+          - master
 
 jobs:
   generate-matrix:
