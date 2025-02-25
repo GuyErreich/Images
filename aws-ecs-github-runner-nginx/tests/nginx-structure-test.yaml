@@ -42,7 +42,7 @@ commandTests:
            "--template-dir", "$WORKDIR/templates",
            "--template-file", "nginx.conf",
            "--output-file", "/usr/local/openresty/nginx/conf/nginx.conf",
-           "--cmd", "[echo, 'Testing entrypoint.py conf generation']"]
+           "--cmd", "echo 'Testing entrypoint.py conf generation'"
     exitCode: 0
 
 
