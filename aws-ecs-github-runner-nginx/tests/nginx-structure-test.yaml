@@ -35,14 +35,16 @@ fileExistenceTests:
 commandTests:
   - name: "Run entrypoint.py with test args"
     command: "$WORKDIR/entrypoint.py"
-    args: ["--resolver", "8.8.8.8",
-           "--port", "3128",
-           "--allowed-upstreams", "169.254.170.2,192.168.1.2",
-           "--server-names", "api.github.com,github.com,*.actions.githubusercontent.com",
-           "--template-dir", "$WORKDIR/templates",
-           "--template-file", "nginx.conf",
-           "--output-file", "/usr/local/openresty/nginx/conf/nginx.conf",
-           "--cmd", "echo 'Testing entrypoint.py conf generation'"
+    args: [
+      "--resolver", "8.8.8.8",
+      "--port", "3128",
+      "--allowed-upstreams", "169.254.170.2,192.168.1.2",
+      "--server-names", "api.github.com,github.com,*.actions.githubusercontent.com",
+      "--template-dir", "$WORKDIR/templates",
+      "--template-file", "nginx.conf",
+      "--output-file", "/usr/local/openresty/nginx/conf/nginx.conf",
+      "--cmd", "echo 'Testing entrypoint.py conf generation'"
+    ]
     exitCode: 0
 
 
