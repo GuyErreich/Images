@@ -2,7 +2,7 @@ schemaVersion: 2.0.0
 
 globalEnvVars:
   - key: "WORKDIR"
-    value: "$WORKDIR"
+    value: "/app"
 
 
 metadataTest:
