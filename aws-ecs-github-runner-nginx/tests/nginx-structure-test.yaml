@@ -42,7 +42,7 @@ commandTests:
       "--server-names", "api.github.com,github.com,*.actions.githubusercontent.com",
       "--template-dir", "/app/templates",
       "--template-file", "nginx.conf",
-      "--output-file", "/tmp/nginx.conf",
+      "--output-file", "/app/temp/nginx.conf",
       "--cmd", "echo", "'Testing entrypoint.py conf generation'"
     ]
     exitCode: 0
