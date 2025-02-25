@@ -28,7 +28,7 @@ fileExistenceTests:
 
 commandTests:
   - name: "Run entrypoint.py with test args"
-    setup: [["cd", "/app"]]
+    setup: [["ash", "-c", "cd", "/app"]]
     command: "entrypoint.py"
     args: ["--resolver", "8.8.8.8",
            "--port", "3128",
