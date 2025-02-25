@@ -40,7 +40,7 @@ commandTests:
       "--port", "3128",
       "--allowed-upstreams", "169.254.170.2,192.168.1.2",
       "--server-names", "api.github.com,github.com,*.actions.githubusercontent.com",
-      "--template-dir", "$WORKDIR/templates",
+      "--template-dir", "/app/templates",
       "--template-file", "nginx.conf",
       "--output-file", "/usr/local/openresty/nginx/conf/nginx.conf",
       "--cmd", "echo", "'Testing entrypoint.py conf generation'"

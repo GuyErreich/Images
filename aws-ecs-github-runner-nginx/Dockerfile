@@ -80,12 +80,12 @@ RUN apk add --no-cache \
     rm -rf /lib/apk/db /etc/apk /var/cache/apk/*
     
 # Copy required shared libraries
-COPY --from=builder ${OPENRESTY_INSTALL_FOLDER} /usr/local/openresty
-# COPY --from=builder /opt/luajit /usr/local/openresty/luajit
+COPY --from=builder ${OPENRESTY_INSTALL_FOLDER} ${OPENRESTY_INSTALL_FOLDER}
+# COPY --from=builder /opt/luajit ${OPENRESTY_INSTALL_FOLDER}/luajit
 COPY --from=builder /opt/deps/* /lib/
 
-ENV PATH="/usr/local/openresty/bin:/usr/local/openresty/nginx/sbin:$PATH"
-ENV LD_LIBRARY_PATH="/lib:/usr/local/openresty/luajit/lib"
+ENV PATH="${OPENRESTY_INSTALL_FOLDER}/bin:${OPENRESTY_INSTALL_FOLDER}/nginx/sbin:$PATH"
+ENV LD_LIBRARY_PATH="/lib:${OPENRESTY_INSTALL_FOLDER}/luajit/lib"
 
 WORKDIR /app
 
