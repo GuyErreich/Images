@@ -8,6 +8,7 @@ on:
       - master
     types:
       - closed  # ✅ Only triggers on PR merge
+  push: # for testing purposes
   workflow_dispatch:
     inputs:
       ref:
