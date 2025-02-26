@@ -52,16 +52,12 @@ runs:
               return `${imageName}-v0.0.0`;
             }
 
-            console.log(`Using regex pattern: ${tagPattern}`);
-
             // Filter the tags based on the pattern
             const filteredTags = tags
               .map(tag => tag.name)
               .filter(tag => tagPattern.test(tag))
               .sort()
               .reverse();
-
-            console.log(`Filtered Tags: ${filteredTags}`);
 
             const latestTag = filteredTags.length > 0 ? filteredTags[0] : `${imageName}-v0.0.0`;
 

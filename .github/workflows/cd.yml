@@ -8,11 +8,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.repository.environment }}
 
 jobs:
+  generate-matrix:
+    uses: ./.github/workflows/set_matrix.yml
+  
   publish-image:
+    needs: generate-matrix
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        IMAGE_DIR: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
+        IMAGE_DIR: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
       fail-fast: false
     environment: 
       name: ${{ 'staging' || 'development' || 'delivery' }}
