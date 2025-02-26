@@ -52,9 +52,21 @@ runs:
               return `${imageName}-v0.0.0`;
             }
 
-            const latestTag = tags.map(tag => tag.name).filter(tag => tagPattern.test(tag)).sort().reverse()[0];
+            console.log(`Using regex pattern: ${tagPattern}`);
 
-            console.log(`Found Latest Tag: ${latestTag || 'None (Defaulting to v0.0.0)'}`);
+            // Filter the tags based on the pattern
+            const filteredTags = tags
+              .map(tag => tag.name)
+              .filter(tag => tagPattern.test(tag))
+              .sort()
+              .reverse();
+
+            console.log(`Filtered Tags: ${filteredTags}`);
+
+            const latestTag = filteredTags.length > 0 ? filteredTags[0] : `${imageName}-v0.0.0`;
+
+            console.log(`Found Latest Tag: ${latestTag}`);
+            return latestTag;
             return latestTag || `${imageName}-v0.0.0`;
           }
 
