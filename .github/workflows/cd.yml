@@ -19,7 +19,7 @@ jobs:
         IMAGE_DIR: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
       fail-fast: false
     environment: 
-      name: ${{ github.ref_name == 'stagging' && 'stagging' || github.ref_name == 'dev' && 'development' || 'master' }}
+      name: ${{ github.ref_name == 'stagging' && 'stagging' || github.ref_name == 'dev' && 'development' || 'delivery' }}
     permissions:
       contents: read
       packages: write
