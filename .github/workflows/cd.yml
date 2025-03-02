@@ -1,11 +1,7 @@
 name: CD - Publish Docker Images
 
 on:
-  push: 
-    tags: 
-      - 'v*-dev$'
-      - 'v*-stagging$'
-      - 'v*$'
+  create:
   workflow_dispatch:
 
 concurrency: 
