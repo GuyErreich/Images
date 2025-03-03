@@ -56,7 +56,7 @@ runs:
             const filteredTags = tags
               .map(tag => tag.name)
               .filter(tag => tagPattern.test(tag))
-              .sort()
+              .sort((a, b) => a - b)
               .reverse();
 
             const latestTag = filteredTags.length > 0 ? filteredTags[0] : `${imageName}-v0.0.0`;
