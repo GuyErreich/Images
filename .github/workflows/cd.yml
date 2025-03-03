@@ -1,7 +1,9 @@
 name: CD - Publish Docker Images
 
 on:
-  create:
+  push: 
+    tags:
+      - '*-v*.*.*'
   workflow_dispatch:
 
 concurrency: 
