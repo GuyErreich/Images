@@ -23,7 +23,7 @@ jobs:
           echo "ref type: ${{ github.ref_type }}"
           echo "ref: ${{ github.ref }}"
           echo "event name: ${{ github.event_name }}"
-          echo "event: ${{ github.event }}"
+          echo "event: ${{ fromJson(github.event) }}"
 
   generate-matrix:
     uses: ./.github/workflows/set_matrix.yml
