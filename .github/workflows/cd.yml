@@ -1,7 +1,7 @@
 name: CD - Publish Docker Images
 
 on:
-  create:
+  push:
   workflow_dispatch:
 
 concurrency: 
@@ -16,22 +16,22 @@ jobs:
       - name: Print Ref
         run: |
           echo "Ref: ${{ github.ref_name }}"
-          echo "event action: ${{ github.event.action }}"
+          echo "ref type: ${{ github.ref_type }}"
+          echo "ref: ${{ github.ref }}"
           echo "event name: ${{ github.event_name }}"
           echo "event: ${{ github.event }}"
 
   generate-matrix:
-    if: github.event.action
     uses: ./.github/workflows/set_matrix.yml
   
   publish-image:
+    needs: generate-matrix
     runs-on: ubuntu-latest
     strategy:
       matrix:
         IMAGE_DIR: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
       fail-fast: false
-    if: github.ref_name == 'stagging' || github.ref_name == 'dev' || github.ref_name == 'master'
-    needs: generate-matrix
+    if: github.ref_type == 'tag' && github.ref_name =~ '^(${{ needs.generate-matrix.outputs.matrix }})-v[0-9]+\.[0-9]+\.[0-9]+(-dev|-staging)?$'
     environment: 
       name: ${{ github.ref_name == 'stagging' && 'stagging' || github.ref_name == 'dev' && 'development' || 'delivery' }}
     permissions:
