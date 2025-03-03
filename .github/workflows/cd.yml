@@ -1,9 +1,10 @@
 name: CD - Publish Docker Images
 
 on:
-  push: 
-    tags:
-      - '*'
+  workflow_run:
+    workflows: ["Auto Tagging"]
+    types:
+      - completed
   workflow_dispatch:
 
 concurrency: 
