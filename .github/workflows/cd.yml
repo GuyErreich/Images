@@ -2,20 +2,42 @@ name: CD - Publish Docker Images
 
 on:
   create:
+  workflow_run:
+    workflows: ["Auto Tagging"]
+    types:
+      - completed
   workflow_dispatch:
 
 concurrency: 
   group: ${{ github.workflow }}-${{ github.repository.environment }}
 
+
+
 jobs:
+  print-ref:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print Ref
+        run: |
+          echo "Ref: ${{ github.ref_name }}"
+          echo "ref type: ${{ github.ref_type }}"
+          echo "ref: ${{ github.ref }}"
+          echo "event name: ${{ github.event_name }}"
+          echo "event: ${{ github.event }}"
+
+  generate-matrix:
+    uses: ./.github/workflows/set_matrix.yml
+  
   publish-image:
+    needs: generate-matrix
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        IMAGE_DIR: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
+        IMAGE_DIR: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
       fail-fast: false
+    if: github.ref_type == 'tag' && github.ref_name =~ '^(${{ needs.generate-matrix.outputs.matrix }})-v[0-9]+\.[0-9]+\.[0-9]+(-dev|-staging)?$'
     environment: 
-      name: ${{ 'staging' || 'development' || 'delivery' }}
+      name: ${{ github.ref_name == 'stagging' && 'stagging' || github.ref_name == 'dev' && 'development' || 'delivery' }}
     permissions:
       contents: read
       packages: write
@@ -45,13 +67,17 @@ jobs:
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
           echo "Using latest tag: $LATEST_TAG"
 
+      - name: Get lowercased repository owner
+        id: lowercased-owner
+        uses: ./.github/workflows/composite_actions/get_lower_case_owner
+
       - name: Build & Push Docker Image
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.IMAGE_DIR }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ matrix.IMAGE_DIR }}:${{ github.ref_name }}
-            ghcr.io/${{ github.repository_owner }}/${{ matrix.IMAGE_DIR }}:${{ env.LATEST_TAG }}
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ matrix.IMAGE_DIR }}:${{ env.LATEST_TAG }}
+            ghcr.io/${{ steps.lowercased-owner.outputs.repo_owner }}/${{ matrix.IMAGE_DIR }}:${{ github.ref_name }}
+            ghcr.io/${{ steps.lowercased-owner.outputs.repo_owner }}/${{ matrix.IMAGE_DIR }}:${{ env.LATEST_TAG }}
+          cache-from: type=registry,ref=ghcr.io/${{ steps.lowercased-owner.outputs.repo_owner }}/${{ matrix.IMAGE_DIR }}:${{ env.LATEST_TAG }}
           cache-to: type=inline
           push: true

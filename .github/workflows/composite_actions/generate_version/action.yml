@@ -1,0 +1,98 @@
+name: "Generate Next Version Tag"
+description: "Determines the next semantic version for an image based on the base_ref"
+inputs:
+  image_name:
+    description: "Name of the Docker image"
+    required: true
+  base_ref:
+    description: "The branch the PR is targeting"
+    required: true
+outputs:
+  latest_tag:
+    description: "Latest found tag for the image"
+    value: ${{ steps.generate-tag.outputs.latest_tag }}
+  new_tag:
+    description: "New versioned tag to use"
+    value: ${{ steps.generate-tag.outputs.new_tag }}
+
+runs:
+  using: "composite"
+  steps:
+
+
+    - name: Generate Version Tag
+      id: generate-tag
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const imageName = '${{ inputs.image_name }}';
+          const baseRef = '${{ inputs.base_ref }}';
+
+          console.log(`Processing Image: ${imageName}`);
+          console.log(`Base Reference: ${baseRef}`);
+
+          async function getLatestTag() {
+            const { data: tags } = await github.rest.repos.listTags({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+
+            console.log("Retrieved Tags: ", tags.map(tag => tag.name));
+
+            let tagPattern;
+            if (baseRef === "dev") {
+              tagPattern = new RegExp(`^${imageName}-v[0-9]+\\.[0-9]+\\.[0-9]+-dev$`);
+            } else if (baseRef === "staging") {
+              tagPattern = new RegExp(`^${imageName}-v[0-9]+\\.[0-9]+\\.[0-9]+-stagging$`);
+            } else if (baseRef === "master") {
+              tagPattern = new RegExp(`^${imageName}-v[0-9]+\\.[0-9]+\\.[0-9]+$`);
+            } else {
+              console.warn(`Unknown baseRef '${baseRef}', defaulting to v0.0.0`);
+              return `${imageName}-v0.0.0`;
+            }
+
+            // Filter the tags based on the pattern
+            const filteredTags = tags
+              .map(tag => tag.name)
+              .filter(tag => tagPattern.test(tag))
+              .sort((a, b) => a - b);
+
+            const latestTag = filteredTags.length > 0 ? filteredTags[0] : `${imageName}-v0.0.0`;
+
+            console.log(`Found Latest Tag: ${latestTag}`);
+            return latestTag;
+            return latestTag || `${imageName}-v0.0.0`;
+          }
+
+          async function determineNextVersion(latestTag) {
+            console.log(`Processing Latest Tag: ${latestTag}`);
+
+            const versionMatch = latestTag.match(/v(\d+)\.(\d+)\.(\d+)/);
+            let major = 0, minor = 0, patch = 0;
+
+            if (versionMatch) {
+              major = parseInt(versionMatch[1]);
+              minor = parseInt(versionMatch[2]);
+              patch = parseInt(versionMatch[3]);
+            }
+
+            patch += 1;
+            let newVersion = `${imageName}-v${major}.${minor}.${patch}`;
+
+            if (baseRef === "dev") {
+              return `${newVersion}-dev`;
+            } else if (baseRef === "staging") {
+              return `${newVersion}-stagging`;
+            } else {
+              return newVersion;
+            }
+          }
+
+          const latestTag = await getLatestTag();
+          const newTag = await determineNextVersion(latestTag);
+
+          console.log(`New Version Generated: ${newTag}`);
+
+          core.setOutput("latest_tag", latestTag);
+          core.setOutput("new_tag", newTag);
