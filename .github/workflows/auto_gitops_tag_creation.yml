@@ -18,7 +18,7 @@ on:
       - stagging
       - master
     types:
-      - closed  # ✅ Only triggers on PR merge
+      - closed
 
 env:
   REF: ${{ github.base_ref || github.event.inputs.ref || 'dev'}}
@@ -32,7 +32,7 @@ jobs:
     needs: generate-matrix
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # ✅ Required to push tags
+      contents: write
 
     strategy:
       matrix:
