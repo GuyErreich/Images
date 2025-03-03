@@ -1,7 +1,7 @@
 name: CD - Publish Docker Images
 
 on:
-  push:
+  create:
   workflow_dispatch:
 
 concurrency: 
