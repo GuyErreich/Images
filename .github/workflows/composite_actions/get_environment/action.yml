@@ -24,18 +24,17 @@ runs:
       uses: actions/github-script@v7
       with:
         script: |
-          try {
-            const branch = ${{ inputs.branch }};
+          const branch = ${{ inputs.branch }};
 
-            const envMap = {
-              dev: "development",
-              stagging: "stagging",
-              master: "delivery"
-            };
+          const envMap = {
+            dev: "development",
+            stagging: "stagging",
+            master: "delivery"
+          };
 
-            if (!envMap[branch]) {
-              core.setFailed(`Error: Unknown branch '${branch}', expected 'dev', 'stagging', or 'master'.`);
-            } else {
-              core.setOutput("environment", envMap[branch]);
-              console.log(`Environment determined: ${envMap[branch]}`);
-            }
+          if (!envMap[branch]) {
+            core.setFailed(`Error: Unknown branch '${branch}', expected 'dev', 'stagging', or 'master'.`);
+          } else {
+            core.setOutput("environment", envMap[branch]);
+            console.log(`Environment determined: ${envMap[branch]}`);
+          }
