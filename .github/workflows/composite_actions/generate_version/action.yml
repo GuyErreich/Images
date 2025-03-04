@@ -1,12 +1,14 @@
 name: "Generate Next Version Tag"
-description: "Determines the next semantic version for an image based on the base_ref"
+description: "Determines the next semantic version for an image based on the environment"
+
 inputs:
   image_name:
     description: "Name of the Docker image"
     required: true
-  base_ref:
-    description: "The branch the PR is targeting"
+  environment:
+    description: "The environment the PR is targeting"
     required: true
+
 outputs:
   latest_tag:
     description: "Latest found tag for the image"
@@ -18,7 +20,12 @@ outputs:
 runs:
   using: "composite"
   steps:
-
+    - name: Get Latest Tag
+      id: get-latest-tag
+      uses: ./.github/workflows/composite_actions/get_latest_tag
+      with:
+        image_name: ${{ inputs.image_name }}
+        environment: ${{ inputs.environment }}
 
     - name: Generate Version Tag
       id: generate-tag
@@ -26,44 +33,7 @@ runs:
       with:
         script: |
           const imageName = '${{ inputs.image_name }}';
-          const baseRef = '${{ inputs.base_ref }}';
-
-          console.log(`Processing Image: ${imageName}`);
-          console.log(`Base Reference: ${baseRef}`);
-
-          async function getLatestTag() {
-            const { data: tags } = await github.rest.repos.listTags({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              per_page: 100,
-            });
-
-            console.log("Retrieved Tags: ", tags.map(tag => tag.name));
-
-            let tagPattern;
-            if (baseRef === "dev") {
-              tagPattern = new RegExp(`^${imageName}-v[0-9]+\\.[0-9]+\\.[0-9]+-dev$`);
-            } else if (baseRef === "staging") {
-              tagPattern = new RegExp(`^${imageName}-v[0-9]+\\.[0-9]+\\.[0-9]+-stagging$`);
-            } else if (baseRef === "master") {
-              tagPattern = new RegExp(`^${imageName}-v[0-9]+\\.[0-9]+\\.[0-9]+$`);
-            } else {
-              console.warn(`Unknown baseRef '${baseRef}', defaulting to v0.0.0`);
-              return `${imageName}-v0.0.0`;
-            }
-
-            // Filter the tags based on the pattern
-            const filteredTags = tags
-              .map(tag => tag.name)
-              .filter(tag => tagPattern.test(tag))
-              .sort((a, b) => a - b);
-
-            const latestTag = filteredTags.length > 0 ? filteredTags[0] : `${imageName}-v0.0.0`;
-
-            console.log(`Found Latest Tag: ${latestTag}`);
-            return latestTag;
-            return latestTag || `${imageName}-v0.0.0`;
-          }
+          const environment = '${{ inputs.environment }}';
 
           async function determineNextVersion(latestTag) {
             console.log(`Processing Latest Tag: ${latestTag}`);
@@ -80,16 +50,19 @@ runs:
             patch += 1;
             let newVersion = `${imageName}-v${major}.${minor}.${patch}`;
 
-            if (baseRef === "dev") {
-              return `${newVersion}-dev`;
-            } else if (baseRef === "staging") {
-              return `${newVersion}-stagging`;
-            } else {
-              return newVersion;
+            switch (environment) {
+              case "development":
+                return `${newVersion}-dev`;
+              case "stagging":
+                return `${newVersion}-stagging`;
+              case "delivery":
+                return newVersion;
+              default:
+                core.setFailed(`Unknown environment '${environment}', expected one of: development, stagging, delivery.`);
             }
           }
 
-          const latestTag = await getLatestTag();
+          const latestTag = ${{ steps.get-latest-tag.outputs.latest_tag }};
           const newTag = await determineNextVersion(latestTag);
 
           console.log(`New Version Generated: ${newTag}`);

@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: 'Branch to tag'
+        description: 'Branch environment'
         required: true
         type: choice
         options:
-          - dev
+          - development
           - stagging
-          - master
+          - delivery
   push:
   pull_request:
     branches:
@@ -19,10 +19,6 @@ on:
       - master
     types:
       - closed
-
-env:
-  REF: ${{ github.base_ref || github.event.inputs.ref || 'dev'}}
-  
 
 jobs:
   generate-matrix:
@@ -45,12 +41,19 @@ jobs:
         with:
           fetch-depth: 0  # Needed to fetch all tags
 
+      - name: Get Environment
+        id: get-environment
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        uses: ./.github/workflows/composite_actions/get_environment
+        with:
+          branch: ${{ github.base_ref }}
+
       - name: Generate Next Version
         id: generate-version
         uses: ./.github/workflows/composite_actions/generate_version
         with:
           image_name: ${{ matrix.IMAGE_DIR }}
-          base_ref: ${{ env.REF }}
+          base_ref: ${{ github.event_name == 'workflow_dispatch' && github.inputs.ref || steps.get-environment.outputs.environment }}
         
       - name: Create and Push Tag
         if: ${{ steps.generate-version.outputs.new_tag }} != ''
