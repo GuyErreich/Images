@@ -1,9 +1,12 @@
+//TODO: make it use environment not baseRef
 name: "Determine Cache Source"
 description: "Determines the appropriate cache tag based on branch"
+
 inputs:
   image_dir:
     description: "Image directory name"
     required: true
+
 outputs:
   cache_tag:
     description: "Cache tag for the Docker image"
@@ -11,6 +14,7 @@ outputs:
   cache_from:
     description: "Full cache source reference"
     value: ${{ steps.determine-cache.outputs.cache_from }}
+
 runs:
   using: "composite"
   steps:

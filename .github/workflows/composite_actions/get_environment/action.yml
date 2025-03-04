@@ -1,0 +1,41 @@
+name: "Determine Environment"
+description: "Maps an input branch name to the corresponding environment"
+
+inputs:
+  branch:
+    description: "Branch name"
+    required: true
+    type: choice
+    options:
+      - dev
+      - stagging
+      - master
+
+outputs:
+  environment:
+    description: "The corresponding environment name"
+    value: ${{ steps.set-env.outputs.environment }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Map Branch to Environment
+      id: set-env
+      uses: actions/github-script@v7
+      with:
+        script: |
+          try {
+            const branch = ${{ inputs.branch }};
+
+            const envMap = {
+              dev: "development",
+              stagging: "stagging",
+              master: "delivery"
+            };
+
+            if (!envMap[branch]) {
+              core.setFailed(`Error: Unknown branch '${branch}', expected 'dev', 'stagging', or 'master'.`);
+            } else {
+              core.setOutput("environment", envMap[branch]);
+              console.log(`Environment determined: ${envMap[branch]}`);
+            }

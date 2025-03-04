@@ -1,9 +1,11 @@
 name: "Convert Repository Owner to Lowercase"
 description: "Outputs the lowercase repository owner name"
+
 outputs:
   repo_owner:
     description: "Lowercased repository owner name"
     value: ${{ steps.lowercased-owner.outputs.result }}
+
 runs:
   using: "composite"
   steps:
