@@ -35,6 +35,8 @@ runs:
               per_page: 100,
             });
 
+            console.debug(`Retrieved Data: ${tags}`)
+
             console.log("Retrieved Tags: ", tags.map(tag => tag.name));
 
             let tagPattern;
