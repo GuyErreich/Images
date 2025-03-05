@@ -53,7 +53,7 @@ jobs:
         uses: ./.github/workflows/composite_actions/generate_version
         with:
           image_name: ${{ matrix.IMAGE_DIR }}
-          base_ref: ${{ github.event_name == 'workflow_dispatch' && github.inputs.ref || steps.get-environment.outputs.environment }}
+          environment: ${{ github.event_name == 'workflow_dispatch' && github.inputs.ref || steps.get-environment.outputs.environment }}
         
       - name: Create and Push Tag
         if: ${{ steps.generate-version.outputs.new_tag }} != ''

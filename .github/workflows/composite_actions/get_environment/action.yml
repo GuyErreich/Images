@@ -36,7 +36,7 @@ runs:
             core.setFailed(`Error: Unknown branch '${branch}', expected 'dev', 'stagging', or 'master'.`);
           }
 
-          core.notice(`Running in '${envMap[branch]}' environment`, title="Active Environment");
+          core.notice(`Running in '${envMap[branch]}' environment`);
           
           core.group("Context Information", () => {
             console.log(`Branch: ${branch}`);
