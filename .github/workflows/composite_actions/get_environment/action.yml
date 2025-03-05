@@ -34,7 +34,13 @@ runs:
 
           if (!envMap[branch]) {
             core.setFailed(`Error: Unknown branch '${branch}', expected 'dev', 'stagging', or 'master'.`);
-          } else {
-            core.setOutput("environment", envMap[branch]);
-            console.log(`Environment determined: ${envMap[branch]}`);
           }
+
+          core.notice(title="Active Environment", message=`Running in '${envMap[branch]}' environment`)
+          
+          core.group("Context Information", () => {
+            console.log(`Branch: ${branch}`);
+            console.log(`Environment determined: ${envMap[branch]}`);
+          });
+          
+          core.setOutput("environment", envMap[branch]);

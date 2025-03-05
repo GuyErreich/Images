@@ -64,4 +64,10 @@ runs:
 
           const latestTag = await getLatestTag();
 
+          core.group("Context Information", () => {
+            console.log(`Image: ${imageName}`);
+            console.log(`Environment: ${environment}`);
+            console.log(`Latest Tag: ${latestTag}`);
+          });
+
           core.setOutput("latest_tag", latestTag);

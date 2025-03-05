@@ -39,13 +39,14 @@ runs:
 
           const cacheFrom = `ghcr.io/${{ steps.lowercase-owner.outputs.repo_owner }}/${{ inputs.image_dir }}:${cacheTag}`;
 
+
           console.log(`Using cache from: ${cacheFrom}`);
+
+          core.group("Context Information", () => {
+            console.log(`Base Ref: ${process.env.GITHUB_BASE_REF}`);
+            console.log(`Cache Tag: ${cacheTag}`);
+            console.log(`Cache From: ${cacheFrom}`);
+          });
 
           core.setOutput("cache_tag", cacheTag);
           core.setOutput("cache_from", cacheFrom);
-
-    - name: print
-      run: |
-        echo ${{ steps.determine-cache.outputs.cache_tag }}
-        echo ${{ steps.determine-cache.outputs.cache_from }}
-      shell: bash

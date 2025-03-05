@@ -14,4 +14,11 @@ runs:
       uses: actions/github-script@v7
       with:
         result-encoding: string
-        script: return context.repo.owner.toLowerCase();
+        script: |
+          core.group("Context Information", () => {
+            console.log(`Repository Owner: ${context.repo.owner}`);
+            console.log(`Repository Name: ${context.repo.repo}`);
+            console.log(`Repository Owner Lower Cased: ${context.repo.owner.toLowerCase()}`);
+          });
+
+          return context.repo.owner.toLowerCase();

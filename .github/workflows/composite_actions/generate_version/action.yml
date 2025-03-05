@@ -65,7 +65,14 @@ runs:
           const latestTag = ${{ steps.get-latest-tag.outputs.latest_tag }};
           const newTag = await determineNextVersion(latestTag);
 
-          console.log(`New Version Generated: ${newTag}`);
+          core.group("Context Information", () => {
+            console.log(`Image: ${imageName}`);
+            console.log(`Environment: ${environment}`);
+            console.log(`Latest Tag Found: ${latestTag}`);
+            console.log(`New Version Generated: ${newTag}`);
+          });
 
           core.setOutput("latest_tag", latestTag);
           core.setOutput("new_tag", newTag);
+
+
