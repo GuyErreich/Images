@@ -69,4 +69,3 @@ jobs:
   
       - name: Analyze Image with Dive
         run: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock wagoodman/dive:latest  ${{ matrix.IMAGE_DIR }}:test --ci
-          

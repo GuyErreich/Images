@@ -46,7 +46,7 @@ jobs:
         if: ${{ github.event_name != 'workflow_dispatch' }}
         uses: ./.github/workflows/composite_actions/get_environment
         with:
-          branch: ${{ github.base_ref }}
+          branch: ${{ github.event_name == 'push' && github.ref_name || github.base_ref }}
 
       - name: Generate Next Version
         id: generate-version

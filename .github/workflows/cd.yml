@@ -23,21 +23,31 @@ jobs:
           echo "ref type: ${{ github.ref_type }}"
           echo "ref: ${{ github.ref }}"
           echo "event name: ${{ github.event_name }}"
-          echo "event: ${{ fromJson(github.event) }}"
+          echo "event: ${{ toJson(github.event) }}"
 
   generate-matrix:
     uses: ./.github/workflows/set_matrix.yml
+
+  get-environment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Environment
+        id: get-environment
+        uses: ./.github/workflows/composite_actions/get_environment
+        with:
+          branch: ${{ github.base_ref }}
   
   publish-image:
-    needs: generate-matrix
+    needs: 
+      - generate-matrix
+      - get-environment
     runs-on: ubuntu-latest
     strategy:
       matrix:
         IMAGE_DIR: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
       fail-fast: false
-    if: github.ref_type == 'tag' && github.ref_name =~ '^(${{ needs.generate-matrix.outputs.matrix }})-v[0-9]+\.[0-9]+\.[0-9]+(-dev|-staging)?$'
     environment: 
-      name: ${{ github.ref_name == 'stagging' && 'stagging' || github.ref_name == 'dev' && 'development' || 'delivery' }}
+      name: ${{ needs.get-environment.outputs.environment }}
     permissions:
       contents: read
       packages: write
