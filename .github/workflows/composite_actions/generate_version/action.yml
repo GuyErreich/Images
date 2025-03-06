@@ -62,7 +62,7 @@ runs:
             }
           }
 
-          const latestTag = ${{ steps.get-latest-tag.outputs.latest_tag }};
+          const latestTag = "${{ steps.get-latest-tag.outputs.latest_tag }}";
           const newTag = await determineNextVersion(latestTag);
 
           core.group("Context Information", () => {
