@@ -57,11 +57,16 @@ runs:
               .filter(tag => tagPattern.test(tag))
               .sort((a, b) => a - b);
 
-            const latestTag = filteredTags.length > 0 ? filteredTags[0] : `${imageName}-v0.0.0`;
+            if (filteredTags.length === 0) {
+              console.log(`No tags found for the pattern: ${tagPattern}`);
+              console.log(`Defaulting to ${imageName}-v0.0.0`);
+              return `${imageName}-v0.0.0`;
+            }
+
+            const latestTag = filteredTags[0]
 
             console.log(`Found Latest Tag: ${latestTag}`);
             return latestTag;
-            return latestTag || `${imageName}-v0.0.0`;
           }
 
           const latestTag = await getLatestTag();
